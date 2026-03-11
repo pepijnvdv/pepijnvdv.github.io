@@ -1,107 +1,237 @@
-import { siteConfig } from "../SiteConfig.js";
-import { Download, Users, Tech } from "../Components/icons/icons.jsx";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { siteConfig } from "../SiteConfig";
 
 export default function About() {
-  // Split de about tekst in paragrafen
-  const paragraphs = siteConfig.aboutLong
-    .split("\n\n")
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const paragraphs = useMemo(
+    () =>
+      siteConfig.aboutLong
+        .split("\n\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    []
+  );
+
+  const sections = useMemo(
+    () => [
+      { id: "intro", title: "Intro", subtitle: "Wie ik ben en waar ik energie van krijg." },
+      { id: "story", title: "Mijn verhaal", subtitle: "Een korte versie van mijn reis." },
+      { id: "profile", title: "Profiel", subtitle: "Werkstijl, focus en contact." },
+      { id: "skills", title: "Skills", subtitle: "Soft skills en tooling die ik inzet." },
+    ],
+    []
+  );
+
+  const [activeId, setActiveId] = useState(sections[0].id);
+
+  useEffect(() => {
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    document.querySelectorAll(".about-exhibit[data-reveal]").forEach((section) => {
+      revealObserver.observe(section);
+    });
+
+    const navObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: "-40% 0px -50% 0px", threshold: 0.1 }
+    );
+
+    sections.forEach((section) => {
+      const el = document.getElementById(section.id);
+      if (el) navObserver.observe(el);
+    });
+
+    return () => {
+      revealObserver.disconnect();
+      navObserver.disconnect();
+    };
+  }, [sections]);
+
+  const handleScroll = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
-    <div className="py-12 px-4">
-      <div className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-(--text) mb-4">Over mij</h1>
-        <p className="text-xl text-(--muted) max-w-2xl mx-auto">{siteConfig.tagline}</p>
-      </div>
-
-      <div className="container mx-auto max-w-5xl">
-        {/* Main Grid */}
-        <div className="flex flex-col lg:flex-row gap-12">
-          {/* Right Column - Photo & Contact Card */}
-          <div className="lg:flex-1">
-            {/* Profile Card */}
-            <div className="bg-(--surface) border border-(--bordercolor) rounded-lg p-6 h-full flex flex-col">
-              {/* Photo */}
-              <div className="relative mb-6">
-                <div className="absolute inset-0 bg-(--accent) rounded-lg blur-xl opacity-20" />
-                <img
-                  src={siteConfig.aboutImage}
-                  alt={siteConfig.name}
-                  className="relative w-full aspect-square object-cover rounded-lg border-4 border-(--accent)"
-                />
-              </div>
-
-              {/* Info */}
-              <div className="text-center mb-6 grow flex flex-col justify-center">
-                <h3 className="text-2xl font-bold text-(--text) mb-1">{siteConfig.name}</h3>
-                <p className="text-(--accent) font-medium">{siteConfig.role}</p>
-              </div>
-
-              {/* CV Download */}
-              <a
-                href={siteConfig.cv}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 
-                           px-4 py-3 bg-(--accent) text-(--accent-text) rounded-lg 
-                           font-semibold hover:bg-(--accent-hover) transition-colors">
-                <Download className="w-5 h-5" />
-                Download CV
-              </a>
+    <div>
+      <section className="about-hero-art">
+        <div className="about-hero-overlay">
+          <p className="about-hero-label">About</p>
+          <h1 className="about-hero-title">{siteConfig.name}</h1>
+          <p className="about-hero-subtitle">{siteConfig.tagline}</p>
+        </div>
+        <div className="about-hero-cards" aria-hidden="true">
+          <div className="hero-card hero-card-primary">
+            <div className="hero-card-art" />
+            <div className="hero-card-meta">
+              <p className="hero-card-track">XR Interaction</p>
+              <p className="hero-card-artist">Spatial UI • Real-time feedback</p>
+            </div>
+            <div className="hero-card-progress">
+              <span className="hero-card-progress-bar" />
+            </div>
+            <div className="hero-card-controls">
+              <span className="hero-icon" />
+              <span className="hero-icon hero-icon-play" />
+              <span className="hero-icon" />
             </div>
           </div>
-
-          {/* Left Column - Bio & Skills */}
-          <div className="flex flex-col gap-8 lg:flex-2">
-            {/* Bio */}
-            <section className="bg-(--surface) border border-(--bordercolor) rounded-lg p-8">
-              <h2 className="text-2xl font-semibold text-(--text) mb-6">Mijn Verhaal</h2>
-              <div className="space-y-4">
-                {paragraphs.map((text, i) => (
-                  <p key={i} className="text-(--muted) leading-relaxed">
-                    {text}
-                  </p>
-                ))}
-              </div>
-            </section>
-
-            {/* Skills Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-              {/* Soft Skills */}
-              <section className="bg-(--surface) border border-(--bordercolor) rounded-lg p-6 flex flex-col">
-                <h3 className="text-lg font-semibold text-(--text) mb-4 flex items-center gap-2">
-                  <Users className="w-5 h-5 text-(--accent)" />
-                  Soft Skills
-                </h3>
-                <ul className="space-y-2">
-                  {siteConfig.softSkills.map((skill) => (
-                    <li key={skill} className="flex items-start gap-2 text-(--muted)">
-                      <span className="text-(--accent) mt-1">â€¢</span>
-                      <span>{skill}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-
-              {/* Hard Skills */}
-              <section className="bg-(--surface) border border-(--bordercolor) rounded-lg p-6 flex flex-col">
-                <h3 className="text-lg font-semibold text-(--text) mb-4 flex items-center gap-2">
-                  <Tech className="w-5 h-5 text-(--accent)" />
-                  Hard Skills
-                </h3>
-                <ul className="space-y-2">
-                  {siteConfig.hardSkills.map((skill) => (
-                    <li key={skill} className="flex items-start gap-2 text-(--muted)">
-                      <span className="text-(--accent) mt-1">â€¢</span>
-                      <span>{skill}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          <div className="hero-card hero-card-secondary">
+            <div className="hero-card-art hero-card-art-alt" />
+            <div className="hero-card-meta">
+              <p className="hero-card-track">Prototype Lab</p>
+              <p className="hero-card-artist">Rapid iterations</p>
+            </div>
+            <div className="hero-card-progress">
+              <span className="hero-card-progress-bar hero-card-progress-bar-alt" />
             </div>
           </div>
         </div>
+        <div className="about-hero-fade" aria-hidden="true" />
+      </section>
+
+      <div className="container mx-auto px-4 pb-16">
+        <div className="about-gallery">
+          <section id="intro" className="about-exhibit" data-reveal>
+            <div className="about-label">
+              <div>
+                <h2>{sections[0].title}</h2>
+                <p>{sections[0].subtitle}</p>
+              </div>
+              <span className="tag">Studio</span>
+            </div>
+            <div className="about-plaque">
+              <h1 className="animate-in">{siteConfig.role}</h1>
+              <h3>XR • Games • Immersive Interaction</h3>
+              <p>{paragraphs[0]}</p>
+              <div className="about-cta">
+                <Link to="/contact" className="about-cta-primary">
+                  Werk samen
+                </Link>
+                <a
+                  href={siteConfig.cv}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="about-cta-secondary"
+                >
+                  Download CV
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section id="story" className="about-exhibit" data-reveal>
+            <div className="about-label">
+              <div>
+                <h2>{sections[1].title}</h2>
+                <p>{sections[1].subtitle}</p>
+              </div>
+              <span className="tag">Journey</span>
+            </div>
+            <div className="about-grid">
+              {paragraphs.slice(1).map((text, index) => (
+                <p key={index}>{text}</p>
+              ))}
+            </div>
+          </section>
+
+          <section id="profile" className="about-exhibit" data-reveal>
+            <div className="about-label">
+              <div>
+                <h2>{sections[2].title}</h2>
+                <p>{sections[2].subtitle}</p>
+              </div>
+              <span className="tag">Profile</span>
+            </div>
+            <div className="about-plaque">
+              <div className="about-profile">
+                <div className="about-photo">
+                  <img src={siteConfig.aboutImage} alt={siteConfig.name} />
+                </div>
+                <div>
+                  <p className="about-name">{siteConfig.name}</p>
+                  <p className="about-role">{siteConfig.role}</p>
+                  <a
+                    className="about-download"
+                    href={siteConfig.cv}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Download CV
+                  </a>
+                </div>
+              </div>
+              <div className="about-contact">
+                <span>{siteConfig.socials.email}</span>
+                <a href={siteConfig.socials.github} target="_blank" rel="noopener noreferrer">
+                  GitHub
+                </a>
+                <a href={siteConfig.socials.linkedin} target="_blank" rel="noopener noreferrer">
+                  LinkedIn
+                </a>
+                <a href={siteConfig.socials.itch} target="_blank" rel="noopener noreferrer">
+                  Itch.io
+                </a>
+              </div>
+            </div>
+          </section>
+
+          <section id="skills" className="about-exhibit" data-reveal>
+            <div className="about-label">
+              <div>
+                <h2>{sections[3].title}</h2>
+                <p>{sections[3].subtitle}</p>
+              </div>
+              <span className="tag">Skillset</span>
+            </div>
+            <div className="about-skills">
+              <div>
+                <h3>Soft skills</h3>
+                <ul>
+                  {siteConfig.softSkills.map((skill) => (
+                    <li key={skill}>{skill}</li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3>Hard skills</h3>
+                <ul>
+                  {siteConfig.hardSkills.map((skill) => (
+                    <li key={skill}>{skill}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div className="about-minimap" aria-label="Section navigation">
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => handleScroll(section.id)}
+            aria-current={activeId === section.id}
+            aria-label={section.title}
+          />
+        ))}
       </div>
     </div>
   );
